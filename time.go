@@ -1,5 +1,4 @@
 //go:build gc
-// +build gc
 
 package protego
 
