@@ -11,7 +11,8 @@ linters:
     - gocritic
     - revive
     - misspell
-    - gofumpt # a bit of a stricter formatter
+    # gofumpt is a slightly stricter formatter than gofmt
+    - gofumpt
 
 linters-settings:
   errcheck:
@@ -20,6 +21,13 @@ linters-settings:
     locale: US
   gofumpt:
     extra-rules: true
+  revive:
+    rules:
+      # we use a blank import of unsafe in time.go
+      # to access runtime.nanotime for monotonic time measures.
+      # we disable this rule here for the false positive.
+      -name: blank-imports
+       disabled: true
 
 run:
   timeout: 2m
