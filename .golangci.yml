@@ -1,34 +1,47 @@
 version: "2"
 
+output:
+  sort-results: true
+  print-issued-lines: false
+
 linters:
+  disable-all: true
   enable:
     - errcheck
-    - gosec
     - govet
     - ineffassign
     - staticcheck
     - unused
     - gocritic
+    - nolintlint
     - revive
-    - misspell
-    # gofumpt is a slightly stricter formatter than gofmt
-    - gofumpt
+    # gofumpt is not available as a linter in golangci-lint v2+
+    # it can be run separately as a formatter gpfumpt -w .
 
 linters-settings:
+  govet:
+    enable:
+      - nilness
+      - reflectvaluecompare
+      - sortslice
+      - unusedwrite
+
   errcheck:
     check-type-assertions: true
-  misspell:
-    locale: US
-  gofumpt:
-    extra-rules: true
-  revive:
-    rules:
-      # we use a blank import of unsafe in time.go
-      # to access runtime.nanotime for monotonic time measures.
-      # we disable this rule here for the false positive.
-      -name: blank-imports
-       disabled: true
 
-run:
-  timeout: 2m
-  tests: true
+  revive:
+    ignoreFileHeader: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-use-default: false
+
+  exclude-rules:
+    - linters: [revive]
+      text: 'unused-parameter: parameter \S+ seems to be unused, consider removing or renaming it as _'
+    - linters: [revive]
+      text: 'empty-block: this block is empty, you can remove it'
+    - linters: [revive]
+      path: time.go
+      text: 'blank-imports'
