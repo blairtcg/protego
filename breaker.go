@@ -366,7 +366,8 @@ func (b *Breaker) Shutdown(ctx context.Context) error {
 
 	for {
 		inflight := b.halfInFlight.Load()
-		if inflight == 0 {
+		queueSize := b.halfOpenQueue.Load()
+		if inflight == 0 && queueSize == 0 {
 			return nil
 		}
 		select {
@@ -384,7 +385,16 @@ func (b *Breaker) AllowContext(ctx context.Context) (Ticket, error) {
 		return Ticket{}, ErrClosed
 	}
 
+	timer := time.NewTimer(15 * time.Millisecond)
+	defer timer.Stop()
+
 	for {
+		select {
+		case <-ctx.Done():
+			return Ticket{}, ctx.Err()
+		default:
+		}
+
 		ticket, err := b.Allow()
 		if err == nil {
 			return ticket, nil
@@ -405,7 +415,8 @@ func (b *Breaker) AllowContext(ctx context.Context) (Ticket, error) {
 			select {
 			case <-ctx.Done():
 				return Ticket{}, ctx.Err()
-			case <-time.After(15 * time.Millisecond):
+			case <-timer.C:
+				timer.Reset(15 * time.Millisecond)
 			}
 		}
 	}
