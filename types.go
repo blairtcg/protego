@@ -74,25 +74,25 @@ type Counts struct {
 // OnRequestQueued is called when a request is added to the half-open queue.
 // OnRequestDropped is called when a request is dropped because the queue is full.
 type Config struct {
-	Name string // Name is the name of the CircuitBreaker.
+	Name string
 
-	MaxRequests uint32 // MaxRequests is the max requests in half-open state.
+	MaxRequests uint32
 
-	Interval time.Duration // Interval is the rotation interval for closed state.
+	Interval time.Duration
 
-	Timeout time.Duration // Timeout is the time before transitioning to half-open.
+	Timeout time.Duration
 
-	ReadyToTrip func(Counts) bool // ReadyToTrip determines when to open the breaker.
+	ReadyToTrip func(Counts) bool
 
-	IsSuccessful func(error) bool // IsSuccessful determines if an error is successful.
+	IsSuccessful func(error) bool
 
-	OnStateChange func(name string, from State, to State) // OnStateChange is called on state transitions.
+	OnStateChange func(name string, from State, to State)
 
-	HalfOpenMaxQueueSize uint32 // HalfOpenMaxQueueSize is the max queue size in half-open state.
+	HalfOpenMaxQueueSize uint32
 
-	OnRequestQueued func(name string, queueSize uint32) // OnRequestQueued is called when a request is queued.
+	OnRequestQueued func(name string, queueSize uint32)
 
-	OnRequestDropped func(name string) // OnRequestDropped is called when a request is dropped.
+	OnRequestDropped func(name string)
 }
 
 // Ticket is used to report the result of a request.
@@ -120,6 +120,12 @@ type BreakerInterface interface {
 	Close()
 	Reset()
 	Shutdown(ctx context.Context) error
+	HalfOpenInflight() uint32
+	HalfOpenQueueSize() uint32
+	IsClosed() bool
+	ExecuteContext(ctx context.Context, work func() error) error
+	ExecuteChannel(work func() error) chan Result
+	AllowContext(ctx context.Context) (Ticket, error)
 }
 
 var _ BreakerInterface = (*Breaker)(nil)
