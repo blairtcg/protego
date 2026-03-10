@@ -129,3 +129,8 @@ type BreakerInterface interface {
 }
 
 var _ BreakerInterface = (*Breaker)(nil)
+
+// Result holds the result of an asynchronous execution.
+type Result struct {
+	Err error
+}
