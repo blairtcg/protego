@@ -364,6 +364,9 @@ func (b *Breaker) Reset() {
 func (b *Breaker) Shutdown(ctx context.Context) error {
 	b.closed.Store(true)
 
+	timer := time.NewTimer(10 * time.Millisecond)
+	defer timer.Stop()
+
 	for {
 		inflight := b.halfInFlight.Load()
 		queueSize := b.halfOpenQueue.Load()
@@ -373,7 +376,8 @@ func (b *Breaker) Shutdown(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(10 * time.Millisecond):
+		case <-timer.C:
+			timer.Reset(10 * time.Millisecond)
 		}
 	}
 }
@@ -493,11 +497,6 @@ func (b *Breaker) ExecuteChannel(work func() error) chan Result {
 		resultCh <- Result{Err: err}
 	}()
 	return resultCh
-}
-
-// Result holds the result of an asynchronous execution.
-type Result struct {
-	Err error
 }
 
 func (b *Breaker) refreshByTime(now int64) {
